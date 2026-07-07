@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Team Match Log — Officiating Calls — World Cup 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+  :root{
+    --pitch:#0d1f14; --card-bg:#122318; --paper:#eef0e6; --paper-dim:#a9b8ac;
+    --yellow:#f2c14e; --red:#d64541; --wire:#2a4a34; --neutral:#5c7568;
+  }
+  *{ box-sizing:border-box; }
+  body{ margin:0; background:radial-gradient(ellipse at top,#143421 0%,var(--pitch) 55%); color:var(--paper); font-family:'Space Grotesk',sans-serif; padding:32px 20px 80px; }
+  .wrap{ max-width:1180px; margin:0 auto; }
+  .eyebrow{ font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--yellow); margin-bottom:10px; }
+  h1{ font-size:clamp(26px,4vw,40px); margin:0 0 12px; font-weight:700; line-height:1.05; }
+  h1 span{ color:var(--yellow); }
+  .sub{ color:var(--paper-dim); max-width:700px; font-size:14.5px; line-height:1.55; }
+
+  .teamgrid{ display:flex; flex-wrap:wrap; gap:8px; margin:22px 0 10px; }
+  .teamchip{
+    font-family:'JetBrains Mono',monospace; font-size:12px; padding:8px 14px; border-radius:20px;
+    background:var(--card-bg); border:1px solid var(--wire); color:var(--paper-dim); cursor:pointer; user-select:none;
+  }
+  .teamchip:hover{ border-color:var(--yellow); color:var(--paper); }
+  .teamchip.active{ background:var(--yellow); color:#12210f; border-color:var(--yellow); font-weight:700; }
+
+  .stagegrid{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:20px; }
+  .stagechip{
+    font-family:'JetBrains Mono',monospace; font-size:11px; padding:5px 11px; border-radius:14px;
+    background:transparent; border:1px solid var(--wire); color:var(--paper-dim); cursor:pointer;
+  }
+  .stagechip.active{ background:var(--wire); color:var(--paper); }
+
+  .stats{ display:flex; gap:1px; background:var(--wire); border:1px solid var(--wire); border-radius:6px; overflow:hidden; margin-bottom:22px; }
+  .stat{ flex:1; background:var(--card-bg); padding:12px 14px; min-width:110px; }
+  .stat .n{ font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:700; color:var(--yellow); }
+  .stat .l{ font-size:10.5px; color:var(--paper-dim); text-transform:uppercase; letter-spacing:.06em; margin-top:2px; }
+
+  table{ width:100%; border-collapse:collapse; }
+  thead th{ text-align:left; font-family:'JetBrains Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--paper-dim); border-bottom:1px solid var(--wire); padding:9px 10px; }
+  tbody tr{ border-bottom:1px solid #1a2f21; }
+  tbody tr:hover{ background:rgba(242,193,78,0.04); }
+  tbody td{ padding:11px 10px; font-size:13px; vertical-align:top; }
+  .team{ font-weight:700; }
+  .score{ font-family:'JetBrains Mono',monospace; color:var(--paper-dim); }
+  .stagepill{ font-family:'JetBrains Mono',monospace; font-size:9.5px; color:var(--paper-dim); }
+  .note{ color:var(--paper-dim); font-size:12px; max-width:320px; line-height:1.45; }
+  .favor{ display:inline-flex; align-items:center; gap:6px; font-weight:700; font-size:12.5px; white-space:nowrap; }
+  .favor::before{ content:''; width:9px; height:12px; border-radius:2px; display:inline-block; flex-shrink:0; }
+  .favor.neutral::before{ background:var(--neutral); }
+  .favor.yellow::before{ background:var(--yellow); }
+  .favor.red::before{ background:var(--red); }
+  .ref{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--paper-dim); }
+
+  .disclaimer{ margin-top:30px; padding-top:18px; border-top:1px solid var(--wire); font-size:12px; color:var(--paper-dim); line-height:1.65; }
+  .disclaimer b{ color:var(--paper); }
+  .method{
+    background:var(--card-bg); border:1px solid var(--wire); border-radius:8px;
+    padding:14px 16px; margin:18px 0 24px; font-size:12.5px; line-height:1.6; color:var(--paper-dim);
+  }
+  .method b{ color:var(--yellow); }
+  .method code{ font-family:'JetBrains Mono',monospace; background:rgba(255,255,255,0.06); padding:1px 5px; border-radius:3px; color:var(--paper); }
+  .ga{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; }
+  .ga.zero{ color:var(--paper-dim); font-weight:400; }
+  .ga.pos{ color:var(--yellow); }
+  .ga.high{ color:var(--red); }
+
+  .sumrow{ display:flex; align-items:center; gap:12px; margin-bottom:9px; }
+  .sumteam{ width:130px; flex-shrink:0; font-size:13px; font-weight:700; text-align:right; }
+  .sumtrack{ flex:1; height:22px; background:var(--card-bg); border:1px solid var(--wire); border-radius:4px; position:relative; overflow:visible; }
+  .sumtrack .zero-line{ position:absolute; left:50%; top:0; bottom:0; width:1px; background:var(--wire); }
+  .sumbar{ position:absolute; top:2px; bottom:2px; border-radius:3px; }
+  .sumbar.pos{ background:var(--yellow); left:50%; }
+  .sumbar.neg{ background:var(--red); right:50%; }
+  .sumval{ width:64px; flex-shrink:0; font-family:'JetBrains Mono',monospace; font-size:12.5px; font-weight:700; }
+
+  @media (max-width:760px){
+    thead{ display:none; }
+    table, tbody, tr, td{ display:block; width:100%; }
+    tbody tr{ padding:12px 4px; }
+    tbody td{ padding:3px 10px; }
+    tbody td::before{ content:attr(data-label); display:block; font-family:'JetBrains Mono',monospace; font-size:9.5px; color:var(--paper-dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:2px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">World Cup 2026 · Team Match Log</div>
+  <h1>Every match, <span>11 teams.</span></h1>
+  <p class="sub">Group stage through the latest result played, for Argentina, Portugal, Spain, Germany, Brazil, Netherlands, Mexico, USA, Canada, France and Croatia. Matches default to <b style="color:var(--paper)">Neutral</b> (0.00 goals added) unless a specific officiating decision was flagged by match reports — this is not a full per-match audit, just what's documented.</p>
+
+  <div class="method">
+    <b>Goals Added</b> is a modeled expected-goals swing, not an official stat: disallowed goal = <code>1.00</code>, converted penalty = <code>0.79</code> (standard conversion-rate value), red card = a rough time-remaining × man-advantage heuristic. Correct, non-discretionary calls (e.g. semi-automated offside rulings) aren't counted even when they disallow a goal — only judgment/VAR-review decisions are. Treat the sign and rough size as illustrative, not precise.
+  </div>
+
+  <div class="panel">
+    <div class="eyebrow" style="margin:6px 0 6px;">Net Goals Added, By Team</div>
+    <p class="sub" style="margin-bottom:16px;">Summed across each team's own matches: positive means the whistle's modeled swing has broken their way on balance; negative means it's cost them.</p>
+    <div id="teamSummary"></div>
+  </div>
+
+  <div class="eyebrow" style="margin:38px 0 6px;">Match-By-Match Detail</div>
+  <div class="stats" id="stats"></div>
+
+  <div class="teamgrid" id="teamFilters"></div>
+  <div class="stagegrid" id="stageFilters"></div>
+
+  <table>
+    <thead><tr><th>Match</th><th>Score</th><th>Stage</th><th>Note</th><th>Referee</th><th>Favors</th><th>Goals Added</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <div class="disclaimer">
+    <b>Scope note:</b> scores and stages are drawn from match reports (ESPN, CBS Sports, Yahoo Sports, FIFA.com, Wikipedia). Referee names are only shown where confirmed in reporting — most group-stage games don't have a sourced referee here. "Favors" reflects only the flagged decisions noted in the "Note" column, not a full-match review; most rows are genuinely Neutral because no notable officiating controversy was reported for that game. Argentina's Round of 16 match vs. Egypt (played July 7) may not yet be reflected with a final score at time of writing.
+  </div>
+</div>
+
+<script>
+const MATCHES = [
+// ARGENTINA
+{team:"Argentina", opp:"Algeria", score:"3–0", stage:"Group J", ref:"Szymon Marciniak", note:"Messi's studs-up foul on Mandi went uncarded by ref and VAR; Algeria filed a formal complaint.", favor:"Argentina", color:"yellow", ga:0.1},
+{team:"Argentina", opp:"Austria", score:"2–0", stage:"Group J", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Argentina", opp:"Jordan", score:"3–1", stage:"Group J", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Argentina", opp:"Cape Verde", score:"3–2 (AET)", stage:"Round of 32", ref:"", note:"Messi and Martínez scored in extra time; no flagged controversy.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Argentina", opp:"Egypt", score:"3– (result pending confirmation)", stage:"Round of 16 · Jul 7", ref:"", note:"Played the day of this log's compilation — final score not fully confirmed in sources reviewed.", favor:"Neutral", color:"neutral", ga:0.0},
+
+// PORTUGAL
+{team:"Portugal", opp:"DR Congo", score:"1–1", stage:"Group K", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Portugal", opp:"Uzbekistan", score:"5–0", stage:"Group K", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Portugal", opp:"Colombia", score:"0–0", stage:"Group K", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Portugal", opp:"Croatia", score:"2–1", stage:"Round of 32", ref:"Espen Eskås", note:"Two stacked events: (1) VAR-awarded penalty converted by Ronaldo (68'). (2) Gvardiol's 103' extra-time equalizer disallowed — Connected Ball Technology detected a faint, TV-invisible touch off Matanović ruling Pašalić offside in the buildup. Without that goal, Croatia go home instead of forcing penalties.", favor:"Portugal", color:"red", ga:1.79},
+{team:"Portugal", opp:"Spain", score:"0–1", stage:"Round of 16", ref:"Anthony Taylor", note:"Late Merino winner for Spain; no flagged officiating controversy.", favor:"Neutral", color:"neutral", ga:0.0},
+
+// SPAIN
+{team:"Spain", opp:"Cape Verde", score:"0–0", stage:"Group H", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Spain", opp:"Saudi Arabia", score:"4–0", stage:"Group H", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Spain", opp:"Uruguay", score:"1–0", stage:"Group H", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Spain", opp:"Austria", score:"3–0", stage:"Round of 32", ref:"", note:"Oyarzabal brace; no flagged controversy.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Spain", opp:"Portugal", score:"1–0", stage:"Round of 16", ref:"Anthony Taylor", note:"Decided by a late Merino goal; no flagged officiating controversy.", favor:"Neutral", color:"neutral", ga:0.0},
+
+// GERMANY
+{team:"Germany", opp:"Curaçao", score:"7–1", stage:"Group E", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Germany", opp:"Ivory Coast", score:"2–1", stage:"Group E", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Germany", opp:"Ecuador", score:"1–2", stage:"Group E", ref:"", note:"Dead-rubber loss after already qualifying; no flagged controversy.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Germany", opp:"Paraguay", score:"1–1 (Paraguay won 4–3 pens)", stage:"Round of 32", ref:"Jalal Jayed", note:"Tah's extra-time header disallowed for a foul on the keeper; Germany's first-ever WC shootout loss. FIFA defended the call.", favor:"Paraguay", color:"red", ga:1.0},
+
+// BRAZIL
+{team:"Brazil", opp:"Morocco", score:"1–1", stage:"Group C", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Brazil", opp:"Haiti", score:"3–0", stage:"Group C", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Brazil", opp:"Scotland", score:"3–0", stage:"Group C", ref:"", note:"Vinícius Jr.'s goal disallowed for a soft foul on Hendry in the build-up (game still won comfortably).", favor:"Scotland", color:"yellow", ga:1.0},
+{team:"Brazil", opp:"Japan", score:"2–1", stage:"Round of 32", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Brazil", opp:"Norway", score:"1–2", stage:"Round of 16", ref:"", note:"Norway's win eliminated Brazil; no flagged officiating controversy found.", favor:"Neutral", color:"neutral", ga:0.0},
+
+// NETHERLANDS
+{team:"Netherlands", opp:"Japan", score:"2–2", stage:"Group F", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Netherlands", opp:"Sweden", score:"5–1", stage:"Group F", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Netherlands", opp:"Tunisia", score:"3–1", stage:"Group F", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Netherlands", opp:"Morocco", score:"1–1 (Morocco won 3–2 pens)", stage:"Round of 32", ref:"", note:"Eliminated on penalties; no flagged officiating controversy found.", favor:"Neutral", color:"neutral", ga:0.0},
+
+// MEXICO
+{team:"Mexico", opp:"South Africa", score:"2–0", stage:"Group A", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Mexico", opp:"South Korea", score:"1–0", stage:"Group A", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Mexico", opp:"Czechia", score:"3–0", stage:"Group A", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Mexico", opp:"Ecuador", score:"2–0", stage:"Round of 32", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Mexico", opp:"England", score:"2–3", stage:"Round of 16", ref:"Alireza Faghani", note:"Quansah sent off after VAR review; penalty (and a second shout) awarded to Mexico. Mexico lost anyway.", favor:"Mexico", color:"red", ga:1.04},
+
+// USA
+{team:"United States", opp:"Paraguay", score:"4–1", stage:"Group D", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"United States", opp:"Australia", score:"2–0", stage:"Group D", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"United States", opp:"Türkiye", score:"2–3", stage:"Group D", ref:"", note:"Dead-rubber loss after already qualifying top of group; no flagged controversy.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"United States", opp:"Bosnia & Herzegovina", score:"2–0", stage:"Round of 32", ref:"Raphael Claus", note:"Balogun shown a straight red (64') for a cleat-down-the-calf challenge; USA still won a man down.", favor:"Bosnia & Herzegovina", color:"red", ga:0.35},
+{team:"United States", opp:"Belgium", score:"1–4", stage:"Round of 16", ref:"", note:"USA eliminated; no flagged officiating controversy found.", favor:"Neutral", color:"neutral", ga:0.0},
+
+// CANADA
+{team:"Canada", opp:"Bosnia & Herzegovina", score:"1–1", stage:"Group B", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Canada", opp:"Qatar", score:"6–0", stage:"Group B", ref:"", note:"Qatar's Madibo sent off for a leg-breaking tackle on Ismaël Koné; five-match suspension followed on review.", favor:"Canada", color:"yellow", ga:0.15},
+{team:"Canada", opp:"Switzerland", score:"1–2", stage:"Group B", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Canada", opp:"South Africa", score:"1–0", stage:"Round of 32", ref:"", note:"First-ever Round of 32 knockout match staged; no flagged controversy.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Canada", opp:"Morocco", score:"0–3", stage:"Round of 16", ref:"", note:"Co-host Canada eliminated; no flagged officiating controversy found.", favor:"Neutral", color:"neutral", ga:0.0},
+
+// FRANCE
+{team:"France", opp:"Senegal", score:"3–1", stage:"Group I", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"France", opp:"Iraq", score:"3–0", stage:"Group I", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"France", opp:"Norway", score:"4–1", stage:"Group I", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"France", opp:"Sweden", score:"3–0", stage:"Round of 32", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"France", opp:"Paraguay", score:"1–0", stage:"Round of 16", ref:"Ilgiz Tantashev", note:"Referee waved away a foul appeal (Diego Gómez on Doué) then VAR intervened, overturning it to a penalty. Mbappé converted (70') for the only goal. Paraguay were adamant Doué had dived.", favor:"France", color:"red", ga:0.79},
+
+// CROATIA
+{team:"Croatia", opp:"England", score:"2–4", stage:"Group L", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Croatia", opp:"Panama", score:"1–0", stage:"Group L", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Croatia", opp:"Ghana", score:"2–1", stage:"Group L", ref:"", note:"No notable officiating incident reported.", favor:"Neutral", color:"neutral", ga:0.0},
+{team:"Croatia", opp:"Portugal", score:"1–2", stage:"Round of 32", ref:"Espen Eskås", note:"Two stacked events against Croatia: (1) VAR-awarded penalty for Portugal, converted by Ronaldo (68'). (2) Croatia's own 103' extra-time equalizer disallowed — Connected Ball Technology detected a faint, TV-invisible touch off Matanović ruling Pašalić offside in the buildup. Without that reversal, Croatia force penalties instead of going home.", favor:"Portugal", color:"red", ga:1.79},
+];
+
+const teams = [...new Set(MATCHES.map(m=>m.team))];
+const stages = ["All", "Group", "Round of 32", "Round of 16"];
+
+let activeTeam = "All";
+let activeStage = "All";
+
+const teamFilters = document.getElementById('teamFilters');
+const t = document.createElement('div');
+t.className = 'teamchip active';
+t.textContent = 'All teams';
+t.onclick = () => setTeam('All', t);
+teamFilters.appendChild(t);
+teams.forEach(team=>{
+  const chip = document.createElement('div');
+  chip.className = 'teamchip';
+  chip.textContent = team;
+  chip.onclick = () => setTeam(team, chip);
+  teamFilters.appendChild(chip);
+});
+function setTeam(team, el){
+  activeTeam = team;
+  [...teamFilters.children].forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  render();
+
+}
+
+const stageFilters = document.getElementById('stageFilters');
+stages.forEach(s=>{
+  const chip = document.createElement('div');
+  chip.className = 'stagechip' + (s==='All' ? ' active' : '');
+  chip.textContent = s;
+  chip.onclick = () => {
+    activeStage = s;
+    [...stageFilters.children].forEach(c=>c.classList.remove('active'));
+    chip.classList.add('active');
+    render();
+  };
+  stageFilters.appendChild(chip);
+});
+
+const rowsEl = document.getElementById('rows');
+const statsEl = document.getElementById('stats');
+
+function render(){
+  const filtered = MATCHES.filter(m =>
+    (activeTeam==='All' || m.team===activeTeam) &&
+    (activeStage==='All' || m.stage.startsWith(activeStage))
+  );
+
+  rowsEl.innerHTML = '';
+  filtered.forEach(m=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td data-label="Match"><span class="team">${m.team}</span> vs ${m.opp}</td>
+      <td data-label="Score"><span class="score">${m.score}</span></td>
+      <td data-label="Stage"><span class="stagepill">${m.stage}</span></td>
+      <td data-label="Note"><span class="note">${m.note}</span></td>
+      <td data-label="Referee"><span class="ref">${m.ref || '—'}</span></td>
+      <td data-label="Favors"><span class="favor ${m.color}">${m.favor}</span></td>
+      <td data-label="Goals Added"><span class="ga ${m.ga===0?'zero':(m.ga>=0.7?'high':'pos')}">${m.ga>0?'+':''}${m.ga.toFixed(2)}</span></td>
+    `;
+    rowsEl.appendChild(tr);
+  });
+
+  const total = filtered.length;
+  const flagged = filtered.filter(m=>m.color!=='neutral').length;
+  const neutral = total - flagged;
+  statsEl.innerHTML = '';
+  [[total,'Matches shown'],[flagged,'Flagged decisions'],[neutral,'Neutral']].forEach(([n,l])=>{
+    const el = document.createElement('div');
+    el.className = 'stat';
+    el.innerHTML = `<div class="n">${n}</div><div class="l">${l}</div>`;
+    statsEl.appendChild(el);
+  });
+}
+render();
+
+// Team summary: net goals added per tracked team
+const trackedTeams = teams; // the 10 teams from MATCHES
+const netByTeam = {};
+trackedTeams.forEach(t => netByTeam[t] = 0);
+MATCHES.forEach(m => {
+  if (m.ga === 0) return;
+  if (m.favor === m.team) netByTeam[m.team] += m.ga;
+  else if (m.favor === m.opp) netByTeam[m.team] -= m.ga;
+});
+
+const maxAbs = Math.max(...Object.values(netByTeam).map(v=>Math.abs(v)), 1);
+const summaryEl = document.getElementById('teamSummary');
+summaryEl.innerHTML = '';
+Object.entries(netByTeam)
+  .sort((a,b) => b[1]-a[1])
+  .forEach(([team, val])=>{
+    const pct = Math.min(Math.abs(val)/maxAbs*50, 50);
+    const row = document.createElement('div');
+    row.className = 'sumrow';
+    row.innerHTML = `
+      <div class="sumteam">${team}</div>
+      <div class="sumtrack">
+        <div class="zero-line"></div>
+        <div class="sumbar ${val>=0?'pos':'neg'}" style="width:${pct}%"></div>
+      </div>
+      <div class="sumval" style="color:${val>0?'var(--yellow)':val<0?'var(--red)':'var(--paper-dim)'}">${val>0?'+':''}${val.toFixed(2)}</div>
+    `;
+    summaryEl.appendChild(row);
+  });
+</script>
+</body>
+</html>
